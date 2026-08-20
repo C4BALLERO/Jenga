@@ -10,30 +10,55 @@ public class BlockController : MonoBehaviour
     [SerializeField] private Material selectedMaterial;
 
     private Material normalMaterial;
+    private Rigidbody blockRigidbody;
 
     public int Level => level;
 
     public bool IsSelected { get; private set; }
 
+    public bool IsExtracted { get; private set; }
+
+    public Rigidbody Rigidbody => blockRigidbody;
+
     private void Awake()
     {
-        if (blockRenderer == null) blockRenderer = GetComponent<Renderer>();
+        if (blockRenderer == null)
+        {
+            blockRenderer = GetComponent<Renderer>();
+        }
 
-        if (blockRenderer != null) normalMaterial = blockRenderer.sharedMaterial;
+        blockRigidbody = GetComponent<Rigidbody>();
+
+        if (blockRenderer != null)
+        {
+            normalMaterial = blockRenderer.sharedMaterial;
+        }
     }
 
     public void SetSelected(bool selected)
     {
         IsSelected = selected;
 
-        if (blockRenderer == null) return;
+        if (blockRenderer == null)
+            return;
 
-        if (selected && selectedMaterial != null) blockRenderer.sharedMaterial = selectedMaterial;
-        else blockRenderer.sharedMaterial = normalMaterial;
+        if (selected && selectedMaterial != null)
+        {
+            blockRenderer.sharedMaterial = selectedMaterial;
+        }
+        else
+        {
+            blockRenderer.sharedMaterial = normalMaterial;
+        }
     }
 
     public void SetLevel(int newLevel)
     {
         level = Mathf.Max(1, newLevel);
+    }
+
+    public void SetExtracted(bool extracted)
+    {
+        IsExtracted = extracted;
     }
 }

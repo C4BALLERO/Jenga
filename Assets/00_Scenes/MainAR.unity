@@ -2021,6 +2021,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   maxRayDistance: 5
+  extractionDistance: 0.055
+  maxDragDistance: 0.09
 --- !u!1001 &1947231914
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -97,8 +97,16 @@ public class ARPhysicsController : MonoBehaviour
 
         foreach (Rigidbody rb in blockRigidbodies)
         {
-            rb.isKinematic = false;
+            BlockController block = rb.GetComponent<BlockController>();
 
+            if (block != null && block.IsExtracted)
+            {
+                rb.useGravity = false;
+                rb.isKinematic = true;
+                continue;
+            }
+
+            rb.isKinematic = false;
             rb.useGravity = true;
 
             rb.linearVelocity = Vector3.zero;
@@ -119,14 +127,25 @@ public class ARPhysicsController : MonoBehaviour
 
     private void ReleaseBlocks()
     {
-        if (blockRigidbodies == null) return;
+        if (blockRigidbodies == null)
+            return;
 
         foreach (Rigidbody rb in blockRigidbodies)
         {
+            BlockController block =
+                rb.GetComponent<BlockController>();
+
+            if (block != null && block.IsExtracted)
+            {
+                rb.useGravity = false;
+                rb.isKinematic = true;
+                continue;
+            }
+
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
-            rb.constraints = RigidbodyConstraints.None;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
 
             rb.WakeUp();
         }
