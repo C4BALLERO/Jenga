@@ -13,6 +13,7 @@ public class BlockSelectionController : MonoBehaviour
     [SerializeField] private ARPhysicsController arPhysicsController;
     [SerializeField] private TowerManager towerManager;
     [SerializeField] private TopPlacementManager topPlacementManager;
+    [SerializeField] private GameManager gameManager;
 
     [Header("Raycast")]
     [SerializeField] private LayerMask blockLayerMask;
@@ -85,6 +86,12 @@ public class BlockSelectionController : MonoBehaviour
             selectedBlock = null;
             selectedRigidbody = null;
 
+            return;
+        }
+
+        if (gameManager != null &&
+            !gameManager.CanPlayerInteract)
+        {
             return;
         }
 

@@ -1,7 +1,10 @@
+using System;
 using UnityEngine;
 
 public class TopPlacementManager : MonoBehaviour
 {
+    public event Action<BlockController> OnBlockPlaced;
+
     [Header("Referencias")]
     [SerializeField] private TowerManager towerManager;
     [SerializeField] private Transform towerRoot;
@@ -224,6 +227,8 @@ public class TopPlacementManager : MonoBehaviour
         );
 
         HideSlots();
+
+        OnBlockPlaced?.Invoke(block);
 
         return true;
     }
