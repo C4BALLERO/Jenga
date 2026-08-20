@@ -9,11 +9,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4293539830581761352}
+  - component: {fileID: 9079624640160778511}
   - component: {fileID: 2713613660306062549}
   - component: {fileID: 4507810819051081666}
   - component: {fileID: 1761655889750223229}
   - component: {fileID: 4369865435073394133}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: JengaBlock
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -35,6 +36,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9079624640160778511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4209228558531527875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc9f20bb26552e141b0016950c421e90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlockController
+  level: 1
+  blockRenderer: {fileID: 0}
+  selectedMaterial: {fileID: 2100000, guid: fefeab075391af2408f32edabfe96be5, type: 2}
 --- !u!33 &2713613660306062549
 MeshFilter:
   m_ObjectHideFlags: 0
