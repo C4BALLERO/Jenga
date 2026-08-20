@@ -12,10 +12,16 @@ public class BlockSelectionController : MonoBehaviour
     [SerializeField] private Camera arCamera;
     [SerializeField] private ARPhysicsController arPhysicsController;
     [SerializeField] private TowerManager towerManager;
+    [SerializeField] private TopPlacementManager topPlacementManager;
 
     [Header("Raycast")]
     [SerializeField] private LayerMask blockLayerMask;
     [SerializeField] private float maxRayDistance = 5f;
+
+    [Header("Colocacion")]
+    [SerializeField]
+    [Range(0.03f, 0.25f)]
+    private float placementTouchRadius = 0.12f;
 
     [Header("Extraccion")]
     [SerializeField] private float extractionDistance = 0.055f;
@@ -71,16 +77,35 @@ public class BlockSelectionController : MonoBehaviour
 
     private void Update()
     {
+        if (arPhysicsController != null &&
+    arPhysicsController.IsCollapseMode)
+        {
+            isDragging = false;
+
+            selectedBlock = null;
+            selectedRigidbody = null;
+
+            return;
+        }
+
         if (arPhysicsController == null || !arPhysicsController.IsTrackingStable)
         {
             HandleTrackingUnavailable();
             return;
         }
 
+        if (HasExtractedBlock &&
+            topPlacementManager != null &&
+            !topPlacementManager.HasActiveSlot)
+        {
+            topPlacementManager
+                .ShowNextPlacementSlot();
+        }
+
         HandleTouchInput();
 
 #if UNITY_EDITOR
-                HandleMouseInput();
+                        HandleMouseInput();
 #endif
     }
 
@@ -160,7 +185,9 @@ public class BlockSelectionController : MonoBehaviour
 
         if (HasExtractedBlock)
         {
-            Debug.Log("Primero debes colocar el " + "bloque retirado sobre la torre.");
+            TryPlaceExtractedBlock(
+                screenPosition
+            );
 
             return;
         }
@@ -255,6 +282,8 @@ public class BlockSelectionController : MonoBehaviour
         selectedRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
 
         selectedRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+
+        selectedBlock.BeginDraggingPhysics();
 
         isDragging = true;
 
@@ -391,6 +420,8 @@ public class BlockSelectionController : MonoBehaviour
         selectedRigidbody.collisionDetectionMode =
             CollisionDetectionMode.Discrete;
 
+        selectedBlock.EndDraggingPhysics();
+
         selectedBlock.SetSelected(true);
 
         Debug.Log(
@@ -402,6 +433,12 @@ public class BlockSelectionController : MonoBehaviour
             "Ahora debe colocarse " +
             "sobre la torre."
         );
+
+        if (topPlacementManager != null)
+        {
+            topPlacementManager
+                .ShowNextPlacementSlot();
+        }
     }
 
     private void CancelDragAndRestore()
@@ -419,6 +456,8 @@ public class BlockSelectionController : MonoBehaviour
 
         selectedRigidbody.position =
             dragStartPosition;
+
+        selectedBlock.EndDraggingPhysics();
 
         selectedRigidbody.collisionDetectionMode =
             CollisionDetectionMode.Discrete;
@@ -485,6 +524,11 @@ public class BlockSelectionController : MonoBehaviour
 
     private void HandleTrackingUnavailable()
     {
+        if (topPlacementManager != null)
+        {
+            topPlacementManager.HideSlots();
+        }
+
         if (isDragging)
         {
             CancelDragAndRestore();
@@ -496,5 +540,95 @@ public class BlockSelectionController : MonoBehaviour
         {
             ClearSelection();
         }
+    }
+
+    private void TryPlaceExtractedBlock(
+        Vector2 screenPosition)
+    {
+        if (selectedBlock == null)
+            return;
+
+        if (!selectedBlock.IsExtracted)
+            return;
+
+        if (topPlacementManager == null)
+            return;
+
+        Transform activeSlot =
+            topPlacementManager.ActiveSlot;
+
+        if (activeSlot == null)
+        {
+            Debug.Log(
+                "No existe una posicion " +
+                "de colocacion activa."
+            );
+
+            return;
+        }
+
+        Vector3 slotScreenPosition3D =
+            arCamera.WorldToScreenPoint(
+                activeSlot.position
+            );
+
+        if (slotScreenPosition3D.z <= 0f)
+            return;
+
+        Vector2 slotScreenPosition =
+            new Vector2(
+                slotScreenPosition3D.x,
+                slotScreenPosition3D.y
+            );
+
+        float touchRadius =
+            Mathf.Min(
+                Screen.width,
+                Screen.height
+            )
+            * placementTouchRadius;
+
+        float distance =
+            Vector2.Distance(
+                screenPosition,
+                slotScreenPosition
+            );
+
+        Debug.Log(
+            $"Distancia al slot: " +
+            $"{distance:F0}px | " +
+            $"Permitida: {touchRadius:F0}px"
+        );
+
+        if (distance > touchRadius)
+        {
+            Debug.Log(
+                "Toca mas cerca del " +
+                "marcador verde."
+            );
+
+            return;
+        }
+
+        bool placed =
+            topPlacementManager.TryPlaceBlock(
+                selectedBlock
+            );
+
+        if (!placed)
+        {
+            Debug.Log(
+                "No se pudo colocar el bloque."
+            );
+
+            return;
+        }
+
+        Debug.Log(
+            "Movimiento completado correctamente."
+        );
+
+        selectedBlock = null;
+        selectedRigidbody = null;
     }
 }

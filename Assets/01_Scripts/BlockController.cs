@@ -9,6 +9,13 @@ public class BlockController : MonoBehaviour
     [SerializeField] private Renderer blockRenderer;
     [SerializeField] private Material selectedMaterial;
 
+    [Header("Fisica")]
+    [SerializeField]
+    private PhysicsMaterial draggingPhysicsMaterial;
+
+    private Collider blockCollider;
+    private PhysicsMaterial normalPhysicsMaterial;
+
     private Material normalMaterial;
     private Rigidbody blockRigidbody;
 
@@ -29,9 +36,18 @@ public class BlockController : MonoBehaviour
 
         blockRigidbody = GetComponent<Rigidbody>();
 
+        blockCollider = GetComponent<Collider>();
+
         if (blockRenderer != null)
         {
-            normalMaterial = blockRenderer.sharedMaterial;
+            normalMaterial =
+                blockRenderer.sharedMaterial;
+        }
+
+        if (blockCollider != null)
+        {
+            normalPhysicsMaterial =
+                blockCollider.sharedMaterial;
         }
     }
 
@@ -60,5 +76,26 @@ public class BlockController : MonoBehaviour
     public void SetExtracted(bool extracted)
     {
         IsExtracted = extracted;
+    }
+
+    public void BeginDraggingPhysics()
+    {
+        if (blockCollider == null)
+            return;
+
+        if (draggingPhysicsMaterial == null)
+            return;
+
+        blockCollider.sharedMaterial =
+            draggingPhysicsMaterial;
+    }
+
+    public void EndDraggingPhysics()
+    {
+        if (blockCollider == null)
+            return;
+
+        blockCollider.sharedMaterial =
+            normalPhysicsMaterial;
     }
 }

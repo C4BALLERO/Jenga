@@ -10,7 +10,8 @@ public class TowerManager : MonoBehaviour
         if (blocksRoot == null)
             return 0;
 
-        BlockController[] blocks = blocksRoot.GetComponentsInChildren<BlockController>();
+        BlockController[] blocks =
+            blocksRoot.GetComponentsInChildren<BlockController>();
 
         int topLevel = 0;
 
@@ -23,6 +24,27 @@ public class TowerManager : MonoBehaviour
         }
 
         return topLevel;
+    }
+
+    public int CountBlocksAtLevel(int level)
+    {
+        if (blocksRoot == null)
+            return 0;
+
+        BlockController[] blocks =
+            blocksRoot.GetComponentsInChildren<BlockController>();
+
+        int count = 0;
+
+        foreach (BlockController block in blocks)
+        {
+            if (block.Level == level)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     public bool CanSelectBlock(BlockController block)

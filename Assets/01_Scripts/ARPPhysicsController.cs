@@ -23,8 +23,12 @@ public class ARPhysicsController : MonoBehaviour
     private Coroutine activationCoroutine;
 
     private bool physicsReady = false;
+    private bool collapseMode = false;
 
-    public bool IsTrackingStable => physicsReady;
+    public bool IsCollapseMode => collapseMode;
+
+    public bool IsTrackingStable =>
+        physicsReady && !collapseMode;
 
     private void Awake()
     {
@@ -60,6 +64,9 @@ public class ARPhysicsController : MonoBehaviour
 
     private void OnTargetStatusChanged(ObserverBehaviour behaviour, TargetStatus targetStatus)
     {
+        if (collapseMode)
+            return;
+
         bool isTracked = targetStatus.Status == Status.TRACKED;
 
         if (isTracked) BeginActivation();
@@ -178,5 +185,50 @@ public class ARPhysicsController : MonoBehaviour
         }
 
         Debug.Log("Fisica congelada.");
+    }
+
+    public void TriggerCollapse()
+    {
+        if (collapseMode)
+            return;
+
+        collapseMode = true;
+        physicsReady = false;
+
+        if (activationCoroutine != null)
+        {
+            StopCoroutine(activationCoroutine);
+            activationCoroutine = null;
+        }
+
+        if (blockRigidbodies == null)
+            return;
+
+        foreach (Rigidbody rb in blockRigidbodies)
+        {
+            if (rb == null)
+                continue;
+
+            rb.linearVelocity =
+                Vector3.zero;
+
+            rb.angularVelocity =
+                Vector3.zero;
+
+            rb.isKinematic = false;
+            rb.useGravity = true;
+
+            rb.constraints =
+                RigidbodyConstraints.None;
+
+            rb.collisionDetectionMode =
+                CollisionDetectionMode.Discrete;
+
+            rb.WakeUp();
+        }
+
+        Debug.Log(
+            "TORRE DERRIBADA - fisica liberada."
+        );
     }
 }

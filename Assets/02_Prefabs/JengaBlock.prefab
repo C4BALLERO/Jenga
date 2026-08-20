@@ -51,6 +51,7 @@ MonoBehaviour:
   level: 1
   blockRenderer: {fileID: 0}
   selectedMaterial: {fileID: 2100000, guid: fefeab075391af2408f32edabfe96be5, type: 2}
+  draggingPhysicsMaterial: {fileID: 13400000, guid: 26749c97c339bd5489a7f797a16a9ee2, type: 2}
 --- !u!33 &2713613660306062549
 MeshFilter:
   m_ObjectHideFlags: 0
