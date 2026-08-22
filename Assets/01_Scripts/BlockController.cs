@@ -10,8 +10,7 @@ public class BlockController : MonoBehaviour
     [SerializeField] private Material selectedMaterial;
 
     [Header("Fisica")]
-    [SerializeField]
-    private PhysicsMaterial draggingPhysicsMaterial;
+    [SerializeField] private PhysicsMaterial draggingPhysicsMaterial;
 
     private Collider blockCollider;
     private PhysicsMaterial normalPhysicsMaterial;
@@ -29,73 +28,44 @@ public class BlockController : MonoBehaviour
 
     private void Awake()
     {
-        if (blockRenderer == null)
-        {
-            blockRenderer = GetComponent<Renderer>();
-        }
+        if (blockRenderer == null) blockRenderer = GetComponent<Renderer>();
 
         blockRigidbody = GetComponent<Rigidbody>();
 
         blockCollider = GetComponent<Collider>();
 
-        if (blockRenderer != null)
-        {
-            normalMaterial =
-                blockRenderer.sharedMaterial;
-        }
+        if (blockRenderer != null) normalMaterial = blockRenderer.sharedMaterial;
 
-        if (blockCollider != null)
-        {
-            normalPhysicsMaterial =
-                blockCollider.sharedMaterial;
-        }
+        if (blockCollider != null) normalPhysicsMaterial = blockCollider.sharedMaterial;
     }
 
     public void SetSelected(bool selected)
     {
         IsSelected = selected;
 
-        if (blockRenderer == null)
-            return;
+        if (blockRenderer == null) return;
 
-        if (selected && selectedMaterial != null)
-        {
-            blockRenderer.sharedMaterial = selectedMaterial;
-        }
-        else
-        {
-            blockRenderer.sharedMaterial = normalMaterial;
-        }
+        if (selected && selectedMaterial != null) blockRenderer.sharedMaterial = selectedMaterial;
+        else blockRenderer.sharedMaterial = normalMaterial;
     }
 
-    public void SetLevel(int newLevel)
-    {
-        level = Mathf.Max(1, newLevel);
-    }
+    public void SetLevel(int newLevel) => level = Mathf.Max(1, newLevel);
 
-    public void SetExtracted(bool extracted)
-    {
-        IsExtracted = extracted;
-    }
+    public void SetExtracted(bool extracted) => IsExtracted = extracted;
 
     public void BeginDraggingPhysics()
     {
-        if (blockCollider == null)
-            return;
+        if (blockCollider == null) return;
 
-        if (draggingPhysicsMaterial == null)
-            return;
+        if (draggingPhysicsMaterial == null) return;
 
-        blockCollider.sharedMaterial =
-            draggingPhysicsMaterial;
+        blockCollider.sharedMaterial = draggingPhysicsMaterial;
     }
 
     public void EndDraggingPhysics()
     {
-        if (blockCollider == null)
-            return;
+        if (blockCollider == null) return;
 
-        blockCollider.sharedMaterial =
-            normalPhysicsMaterial;
+        blockCollider.sharedMaterial = normalPhysicsMaterial;
     }
 }

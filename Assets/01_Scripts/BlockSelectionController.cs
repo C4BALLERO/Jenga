@@ -14,15 +14,14 @@ public class BlockSelectionController : MonoBehaviour
     [SerializeField] private TowerManager towerManager;
     [SerializeField] private TopPlacementManager topPlacementManager;
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private AudioManager audioManager;
 
     [Header("Raycast")]
     [SerializeField] private LayerMask blockLayerMask;
     [SerializeField] private float maxRayDistance = 5f;
 
     [Header("Colocacion")]
-    [SerializeField]
-    [Range(0.03f, 0.25f)]
-    private float placementTouchRadius = 0.12f;
+    [SerializeField][Range(0.03f, 0.25f)] private float placementTouchRadius = 0.12f;
 
     [Header("Extraccion")]
     [SerializeField] private float extractionDistance = 0.055f;
@@ -46,11 +45,7 @@ public class BlockSelectionController : MonoBehaviour
     {
         get
         {
-            if (selectedBlock != null &&
-                selectedBlock.IsExtracted)
-            {
-                return selectedBlock;
-            }
+            if (selectedBlock != null && selectedBlock.IsExtracted) return selectedBlock;
 
             return null;
         }
@@ -60,26 +55,16 @@ public class BlockSelectionController : MonoBehaviour
 
     private void Awake()
     {
-        if (arCamera == null)
-        {
-            arCamera = GetComponent<Camera>();
-        }
+        if (arCamera == null) arCamera = GetComponent<Camera>();
     }
 
-    private void OnEnable()
-    {
-        EnhancedTouchSupport.Enable();
-    }
+    private void OnEnable() => EnhancedTouchSupport.Enable();
 
-    private void OnDisable()
-    {
-        EnhancedTouchSupport.Disable();
-    }
+    private void OnDisable() => EnhancedTouchSupport.Disable();
 
     private void Update()
     {
-        if (arPhysicsController != null &&
-    arPhysicsController.IsCollapseMode)
+        if (arPhysicsController != null && arPhysicsController.IsCollapseMode)
         {
             isDragging = false;
 
@@ -89,11 +74,7 @@ public class BlockSelectionController : MonoBehaviour
             return;
         }
 
-        if (gameManager != null &&
-            !gameManager.CanPlayerInteract)
-        {
-            return;
-        }
+        if (gameManager != null && !gameManager.CanPlayerInteract) return;
 
         if (arPhysicsController == null || !arPhysicsController.IsTrackingStable)
         {
@@ -101,40 +82,29 @@ public class BlockSelectionController : MonoBehaviour
             return;
         }
 
-        if (HasExtractedBlock &&
-            topPlacementManager != null &&
-            !topPlacementManager.HasActiveSlot)
-        {
-            topPlacementManager
-                .ShowNextPlacementSlot();
-        }
+        if (HasExtractedBlock && topPlacementManager != null && !topPlacementManager.HasActiveSlot) topPlacementManager.ShowNextPlacementSlot();
 
         HandleTouchInput();
 
 #if UNITY_EDITOR
-                        HandleMouseInput();
+            HandleMouseInput();
 #endif
     }
 
     private void FixedUpdate()
     {
-        if (!isDragging)
-            return;
+        if (!isDragging) return;
 
-        if (selectedRigidbody == null)
-            return;
+        if (selectedRigidbody == null) return;
 
-        selectedRigidbody.MovePosition(
-            desiredPosition
-        );
+        selectedRigidbody.MovePosition(desiredPosition);
     }
 
     private void HandleTouchInput()
     {
         var touches = Touch.activeTouches;
 
-        if (touches.Count == 0)
-            return;
+        if (touches.Count == 0) return;
 
         Touch touch = touches[0];
 
@@ -160,55 +130,31 @@ public class BlockSelectionController : MonoBehaviour
 
     private void HandleMouseInput()
     {
-        if (Mouse.current == null)
-            return;
+        if (Mouse.current == null) return;
 
-        Vector2 position =
-            Mouse.current.position.ReadValue();
+        Vector2 position = Mouse.current.position.ReadValue();
 
-        if (Mouse.current.leftButton
-            .wasPressedThisFrame)
-        {
-            HandlePointerBegan(position);
-        }
+        if (Mouse.current.leftButton.wasPressedThisFrame) HandlePointerBegan(position);
 
-        if (Mouse.current.leftButton.isPressed)
-        {
-            HandlePointerMoved(position);
-        }
+        if (Mouse.current.leftButton.isPressed) HandlePointerMoved(position);
 
-        if (Mouse.current.leftButton
-            .wasReleasedThisFrame)
-        {
-            HandlePointerEnded();
-        }
+        if (Mouse.current.leftButton.wasReleasedThisFrame) HandlePointerEnded();
     }
 
-    private void HandlePointerBegan(
-        Vector2 screenPosition)
+    private void HandlePointerBegan(Vector2 screenPosition)
     {
-        if (isDragging)
-            return;
+        if (isDragging) return;
 
         if (HasExtractedBlock)
         {
-            TryPlaceExtractedBlock(
-                screenPosition
-            );
+            TryPlaceExtractedBlock(screenPosition);
 
             return;
         }
 
         Ray ray = arCamera.ScreenPointToRay(screenPosition);
 
-        bool hitSomething =
-            Physics.Raycast(
-                ray,
-                out RaycastHit hit,
-                maxRayDistance,
-                blockLayerMask,
-                QueryTriggerInteraction.Ignore
-            );
+        bool hitSomething = Physics.Raycast(ray, out RaycastHit hit, maxRayDistance, blockLayerMask, QueryTriggerInteraction.Ignore);
 
         if (!hitSomething)
         {
@@ -226,8 +172,6 @@ public class BlockSelectionController : MonoBehaviour
 
         if (!towerManager.CanSelectBlock(block))
         {
-            Debug.Log($"Movimiento invalido: " + $"{block.name} no puede retirarse.");
-
             ClearSelection();
             return;
         }
@@ -237,11 +181,9 @@ public class BlockSelectionController : MonoBehaviour
         BeginDrag(screenPosition);
     }
 
-    private void BeginDrag(
-        Vector2 screenPosition)
+    private void BeginDrag(Vector2 screenPosition)
     {
-        if (selectedBlock == null)
-            return;
+        if (selectedBlock == null) return;
 
         selectedRigidbody = selectedBlock.Rigidbody;
 
@@ -293,105 +235,55 @@ public class BlockSelectionController : MonoBehaviour
         selectedBlock.BeginDraggingPhysics();
 
         isDragging = true;
-
-        Debug.Log($"Extrayendo: {selectedBlock.name}");
     }
 
-    private void HandlePointerMoved(
-        Vector2 screenPosition)
+    private void HandlePointerMoved(Vector2 screenPosition)
     {
-        if (!isDragging)
-            return;
+        if (!isDragging) return;
 
-        if (selectedRigidbody == null)
-            return;
+        if (selectedRigidbody == null) return;
 
-        if (!TryGetPointOnDragPlane(screenPosition, out Vector3 currentPoint))
-        {
-            return;
-        }
+        if (!TryGetPointOnDragPlane(screenPosition, out Vector3 currentPoint)) return;
 
         Vector3 pointerMovement = currentPoint - pointerStartPoint;
 
-        float distance =
-            Vector3.Dot(
-                pointerMovement,
-                dragAxis
-            );
+        float distance = Vector3.Dot(pointerMovement, dragAxis);
 
-        distance = Mathf.Clamp(
-            distance,
-            -maxDragDistance,
-            maxDragDistance
-        );
+        distance = Mathf.Clamp(distance, -maxDragDistance, maxDragDistance);
 
-        desiredPosition =
-            dragStartPosition +
-            dragAxis * distance;
+        desiredPosition = dragStartPosition + dragAxis * distance;
     }
 
     private void HandlePointerEnded()
     {
-        if (!isDragging)
-            return;
+        if (!isDragging) return;
 
         isDragging = false;
 
-        if (selectedBlock == null ||
-            selectedRigidbody == null)
-        {
-            return;
-        }
+        if (selectedBlock == null || selectedRigidbody == null) return;
 
-        selectedRigidbody.position =
-            desiredPosition;
+        selectedRigidbody.position = desiredPosition;
 
-        float distance =
-            GetDraggedDistance();
+        float distance = GetDraggedDistance();
 
-        Debug.Log(
-            $"Extraccion: {distance:F3} m"
-        );
-
-        if (distance >= extractionDistance)
-        {
-            CompleteExtraction();
-        }
-        else
-        {
-            CancelDragAndRestore();
-        }
+        if (distance >= extractionDistance) CompleteExtraction();
+        else CancelDragAndRestore();
     }
 
     private float GetDraggedDistance()
     {
-        if (selectedRigidbody == null)
-            return 0f;
+        if (selectedRigidbody == null) return 0f;
 
-        Vector3 movement =
-            selectedRigidbody.position -
-            dragStartPosition;
+        Vector3 movement = selectedRigidbody.position - dragStartPosition;
 
-        return Mathf.Abs(
-            Vector3.Dot(
-                movement,
-                dragAxis
-            )
-        );
+        return Mathf.Abs(Vector3.Dot(movement, dragAxis));
     }
 
-    private bool TryGetPointOnDragPlane(
-        Vector2 screenPosition,
-        out Vector3 point)
+    private bool TryGetPointOnDragPlane(Vector2 screenPosition, out Vector3 point)
     {
-        Ray ray =
-            arCamera.ScreenPointToRay(
-                screenPosition
-            );
+        Ray ray = arCamera.ScreenPointToRay(screenPosition);
 
-        if (dragPlane.Raycast(
-            ray,
-            out float distance))
+        if (dragPlane.Raycast(ray, out float distance))
         {
             point = ray.GetPoint(distance);
 
@@ -408,50 +300,32 @@ public class BlockSelectionController : MonoBehaviour
     {
         selectedBlock.SetExtracted(true);
 
-        selectedRigidbody.position =
-            desiredPosition;
+        selectedRigidbody.position = desiredPosition;
 
-        selectedRigidbody.linearVelocity =
-            Vector3.zero;
+        selectedRigidbody.linearVelocity = Vector3.zero;
 
-        selectedRigidbody.angularVelocity =
-            Vector3.zero;
+        selectedRigidbody.angularVelocity = Vector3.zero;
 
         selectedRigidbody.useGravity = false;
 
         selectedRigidbody.isKinematic = true;
 
-        selectedRigidbody.constraints =
-            RigidbodyConstraints.FreezeRotation;
+        selectedRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
 
-        selectedRigidbody.collisionDetectionMode =
-            CollisionDetectionMode.Discrete;
+        selectedRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
         selectedBlock.EndDraggingPhysics();
 
         selectedBlock.SetSelected(true);
 
-        Debug.Log(
-            $"Bloque retirado correctamente: " +
-            $"{selectedBlock.name}"
-        );
+        if (audioManager != null) audioManager.PlayBlockExtracted();
 
-        Debug.Log(
-            "Ahora debe colocarse " +
-            "sobre la torre."
-        );
-
-        if (topPlacementManager != null)
-        {
-            topPlacementManager
-                .ShowNextPlacementSlot();
-        }
+        if (topPlacementManager != null) topPlacementManager.ShowNextPlacementSlot();
     }
 
     private void CancelDragAndRestore()
     {
-        if (selectedBlock == null ||
-            selectedRigidbody == null)
+        if (selectedBlock == null || selectedRigidbody == null)
         {
             isDragging = false;
             ClearSelection();
@@ -461,67 +335,47 @@ public class BlockSelectionController : MonoBehaviour
 
         isDragging = false;
 
-        selectedRigidbody.position =
-            dragStartPosition;
+        selectedRigidbody.position = dragStartPosition;
 
         selectedBlock.EndDraggingPhysics();
 
-        selectedRigidbody.collisionDetectionMode =
-            CollisionDetectionMode.Discrete;
+        selectedRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
         selectedRigidbody.isKinematic = false;
 
         selectedRigidbody.useGravity = true;
 
-        selectedRigidbody.constraints =
-            RigidbodyConstraints.FreezeRotation;
+        selectedRigidbody.constraints = RigidbodyConstraints.FreezeRotation;
 
-        selectedRigidbody.linearVelocity =
-            Vector3.zero;
+        selectedRigidbody.linearVelocity = Vector3.zero;
 
-        selectedRigidbody.angularVelocity =
-            Vector3.zero;
+        selectedRigidbody.angularVelocity = Vector3.zero;
 
         selectedRigidbody.WakeUp();
 
         selectedBlock.SetSelected(false);
 
-        Debug.Log(
-            "Extraccion invalida. " +
-            "El bloque vuelve a su posicion."
-        );
-
         selectedBlock = null;
         selectedRigidbody = null;
     }
 
-    private void SelectBlock(
-        BlockController block)
+    private void SelectBlock(BlockController block)
     {
-        if (selectedBlock == block)
-            return;
+        if (selectedBlock == block) return;
 
         ClearSelection();
 
         selectedBlock = block;
 
         selectedBlock.SetSelected(true);
-
-        Debug.Log(
-            $"Seleccionado: " +
-            $"{selectedBlock.name} | " +
-            $"Nivel {selectedBlock.Level}"
-        );
     }
 
 
     private void ClearSelection()
     {
-        if (selectedBlock == null)
-            return;
+        if (selectedBlock == null) return;
 
-        if (selectedBlock.IsExtracted)
-            return;
+        if (selectedBlock.IsExtracted) return;
 
         selectedBlock.SetSelected(false);
 
@@ -531,10 +385,7 @@ public class BlockSelectionController : MonoBehaviour
 
     private void HandleTrackingUnavailable()
     {
-        if (topPlacementManager != null)
-        {
-            topPlacementManager.HideSlots();
-        }
+        if (topPlacementManager != null) topPlacementManager.HideSlots();
 
         if (isDragging)
         {
@@ -542,98 +393,36 @@ public class BlockSelectionController : MonoBehaviour
             return;
         }
 
-        if (selectedBlock != null &&
-            !selectedBlock.IsExtracted)
-        {
-            ClearSelection();
-        }
+        if (selectedBlock != null && !selectedBlock.IsExtracted) ClearSelection();
     }
 
-    private void TryPlaceExtractedBlock(
-        Vector2 screenPosition)
+    private void TryPlaceExtractedBlock(Vector2 screenPosition)
     {
-        if (selectedBlock == null)
-            return;
+        if (selectedBlock == null) return;
 
-        if (!selectedBlock.IsExtracted)
-            return;
+        if (!selectedBlock.IsExtracted) return;
 
-        if (topPlacementManager == null)
-            return;
+        if (topPlacementManager == null) return;
 
-        Transform activeSlot =
-            topPlacementManager.ActiveSlot;
+        Transform activeSlot = topPlacementManager.ActiveSlot;
 
-        if (activeSlot == null)
-        {
-            Debug.Log(
-                "No existe una posicion " +
-                "de colocacion activa."
-            );
+        if (activeSlot == null) return;
 
-            return;
-        }
+        Vector3 slotScreenPosition3D = arCamera.WorldToScreenPoint(activeSlot.position);
 
-        Vector3 slotScreenPosition3D =
-            arCamera.WorldToScreenPoint(
-                activeSlot.position
-            );
+        if (slotScreenPosition3D.z <= 0f) return;
 
-        if (slotScreenPosition3D.z <= 0f)
-            return;
+        Vector2 slotScreenPosition = new Vector2(slotScreenPosition3D.x, slotScreenPosition3D.y);
 
-        Vector2 slotScreenPosition =
-            new Vector2(
-                slotScreenPosition3D.x,
-                slotScreenPosition3D.y
-            );
+        float touchRadius = Mathf.Min(Screen.width, Screen.height) * placementTouchRadius;
 
-        float touchRadius =
-            Mathf.Min(
-                Screen.width,
-                Screen.height
-            )
-            * placementTouchRadius;
+        float distance = Vector2.Distance(screenPosition, slotScreenPosition);
 
-        float distance =
-            Vector2.Distance(
-                screenPosition,
-                slotScreenPosition
-            );
+        if (distance > touchRadius) return;
 
-        Debug.Log(
-            $"Distancia al slot: " +
-            $"{distance:F0}px | " +
-            $"Permitida: {touchRadius:F0}px"
-        );
+        bool placed = topPlacementManager.TryPlaceBlock(selectedBlock);
 
-        if (distance > touchRadius)
-        {
-            Debug.Log(
-                "Toca mas cerca del " +
-                "marcador verde."
-            );
-
-            return;
-        }
-
-        bool placed =
-            topPlacementManager.TryPlaceBlock(
-                selectedBlock
-            );
-
-        if (!placed)
-        {
-            Debug.Log(
-                "No se pudo colocar el bloque."
-            );
-
-            return;
-        }
-
-        Debug.Log(
-            "Movimiento completado correctamente."
-        );
+        if (!placed) return;
 
         selectedBlock = null;
         selectedRigidbody = null;

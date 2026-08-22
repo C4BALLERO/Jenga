@@ -7,20 +7,15 @@ public class TowerManager : MonoBehaviour
 
     public int GetTopLevel()
     {
-        if (blocksRoot == null)
-            return 0;
+        if (blocksRoot == null) return 0;
 
-        BlockController[] blocks =
-            blocksRoot.GetComponentsInChildren<BlockController>();
+        BlockController[] blocks = blocksRoot.GetComponentsInChildren<BlockController>();
 
         int topLevel = 0;
 
         foreach (BlockController block in blocks)
         {
-            if (block.Level > topLevel)
-            {
-                topLevel = block.Level;
-            }
+            if (block.Level > topLevel) topLevel = block.Level;
         }
 
         return topLevel;
@@ -28,20 +23,15 @@ public class TowerManager : MonoBehaviour
 
     public int CountBlocksAtLevel(int level)
     {
-        if (blocksRoot == null)
-            return 0;
+        if (blocksRoot == null) return 0;
 
-        BlockController[] blocks =
-            blocksRoot.GetComponentsInChildren<BlockController>();
+        BlockController[] blocks = blocksRoot.GetComponentsInChildren<BlockController>();
 
         int count = 0;
 
         foreach (BlockController block in blocks)
         {
-            if (block.Level == level)
-            {
-                count++;
-            }
+            if (block.Level == level) count++;
         }
 
         return count;
@@ -49,11 +39,9 @@ public class TowerManager : MonoBehaviour
 
     public bool CanSelectBlock(BlockController block)
     {
-        if (block == null)
-            return false;
+        if (block == null) return false;
 
-        if (block.IsExtracted)
-            return false;
+        if (block.IsExtracted) return false;
 
         int topLevel = GetTopLevel();
 

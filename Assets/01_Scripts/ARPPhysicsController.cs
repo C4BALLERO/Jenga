@@ -27,8 +27,7 @@ public class ARPhysicsController : MonoBehaviour
 
     public bool IsCollapseMode => collapseMode;
 
-    public bool IsTrackingStable =>
-        physicsReady && !collapseMode;
+    public bool IsTrackingStable => physicsReady && !collapseMode;
 
     private void Awake()
     {
@@ -64,8 +63,7 @@ public class ARPhysicsController : MonoBehaviour
 
     private void OnTargetStatusChanged(ObserverBehaviour behaviour, TargetStatus targetStatus)
     {
-        if (collapseMode)
-            return;
+        if (collapseMode) return;
 
         bool isTracked = targetStatus.Status == Status.TRACKED;
 
@@ -94,8 +92,6 @@ public class ARPhysicsController : MonoBehaviour
 
         physicsReady = true;
         activationCoroutine = null;
-
-        Debug.Log("Torre estabilizada. Fisica completamente activa.");
     }
 
     private void StartSettling()
@@ -128,19 +124,15 @@ public class ARPhysicsController : MonoBehaviour
 
             rb.WakeUp();
         }
-
-        Debug.Log("Iniciando asentamiento de la torre.");
     }
 
     private void ReleaseBlocks()
     {
-        if (blockRigidbodies == null)
-            return;
+        if (blockRigidbodies == null) return;
 
         foreach (Rigidbody rb in blockRigidbodies)
         {
-            BlockController block =
-                rb.GetComponent<BlockController>();
+            BlockController block = rb.GetComponent<BlockController>();
 
             if (block != null && block.IsExtracted)
             {
@@ -183,14 +175,11 @@ public class ARPhysicsController : MonoBehaviour
 
             rb.constraints = RigidbodyConstraints.None;
         }
-
-        Debug.Log("Fisica congelada.");
     }
 
     public void TriggerCollapse()
     {
-        if (collapseMode)
-            return;
+        if (collapseMode) return;
 
         collapseMode = true;
         physicsReady = false;
@@ -201,34 +190,24 @@ public class ARPhysicsController : MonoBehaviour
             activationCoroutine = null;
         }
 
-        if (blockRigidbodies == null)
-            return;
+        if (blockRigidbodies == null) return;
 
         foreach (Rigidbody rb in blockRigidbodies)
         {
-            if (rb == null)
-                continue;
+            if (rb == null) continue;
 
-            rb.linearVelocity =
-                Vector3.zero;
+            rb.linearVelocity = Vector3.zero;
 
-            rb.angularVelocity =
-                Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
 
             rb.isKinematic = false;
             rb.useGravity = true;
 
-            rb.constraints =
-                RigidbodyConstraints.None;
+            rb.constraints = RigidbodyConstraints.None;
 
-            rb.collisionDetectionMode =
-                CollisionDetectionMode.Discrete;
+            rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
             rb.WakeUp();
         }
-
-        Debug.Log(
-            "TORRE DERRIBADA - fisica liberada."
-        );
     }
 }
