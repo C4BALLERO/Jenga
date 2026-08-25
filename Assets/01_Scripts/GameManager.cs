@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private TMP_Text currentPlayerText;
+    [SerializeField] private TMP_Text turnLabelText;
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TMP_Text gameOverText;
 
@@ -114,10 +115,11 @@ public class GameManager : MonoBehaviour
         }
 
         if (topPlacementManager != null) topPlacementManager.HideSlots();
+        if (turnLabelText != null) turnLabelText.text = "Estado de Juego";
 
-        if (currentPlayerText != null) currentPlayerText.text = "PARTIDA TERMINADA";
+        if (currentPlayerText != null) currentPlayerText.text = "Partida Terminada";
 
-        if (gameOverText != null) gameOverText.text = $"TORRE DERRIBADA\n" + $"JUGADOR {currentPlayer} " + $"PIERDE";
+        if (gameOverText != null) gameOverText.text = $"JUGADOR {currentPlayer} " + $"PIERDE";
 
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
     }
@@ -126,7 +128,7 @@ public class GameManager : MonoBehaviour
     {
         if (currentPlayerText == null) return;
 
-        currentPlayerText.text = $"Turno: Jugador {currentPlayer}";
+        currentPlayerText.text = $"Jugador {currentPlayer}";
     }
 
     public void RestartGame()
