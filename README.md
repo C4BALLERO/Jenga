@@ -17,6 +17,18 @@ guardan como PNG importados como Sprite, y los modelos 3D se montan combinando
 primitivas. Cualquiera de los dos se puede sustituir por assets descargados
 arrastrándolos al campo correspondiente del ScriptableObject o del prefab.
 
+## Si algo no aparece
+
+**No se ha generado el contenido** (no existe `Assets/Generated` ni
+`Assets/Scenes/Game.unity`): ejecuta **Jenga → Generar contenido del juego**.
+La generación automática se lanza sola al abrir el proyecto, pero espera a que el
+editor termine de importar y compilar, así que puede tardar unos segundos.
+
+**`ArgumentOutOfRangeException` en `UnityEditor.Search.SearchDatabase`**: es un
+fallo del indexador de búsqueda propio de Unity al arrancar, no del juego. No
+impide jugar. Se quita borrando la carpeta `Library/` y volviendo a abrir el
+proyecto, para que Unity reconstruya sus índices.
+
 ## Controles
 
 | Acción | Tecla |
