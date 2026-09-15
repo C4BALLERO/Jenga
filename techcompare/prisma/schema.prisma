@@ -1,0 +1,508 @@
+// Esquema de TechCompare.
+//
+// Diseñado para escalar de cientos a cientos de miles de productos:
+//  - Un `Product` maestro por equipo real, con especificaciones tipadas por
+//    categoría en tablas satélite (Phone / Laptop / Cpu / Gpu).
+//  - N `ProductOffer` por producto: la misma laptop en varias tiendas.
+//  - `PriceHistory` como serie temporal separada de la oferta vigente.
+//  - Procedencia y confianza del dato a nivel de producto y de especificación.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  EDITOR
+  ADMIN
+}
+
+enum Category {
+  PHONE
+  LAPTOP
+  CPU
+  GPU
+}
+
+enum Currency {
+  BOB
+  USD
+  EUR
+}
+
+enum Availability {
+  IN_STOCK
+  OUT_OF_STOCK
+  PREORDER
+  UNKNOWN
+}
+
+enum Confidence {
+  VERIFIED
+  REPORTED
+  ESTIMATED
+  DEMO
+}
+
+enum ProviderKind {
+  BRAND
+  RETAILER
+  FEED
+  MANUAL
+  MOCK
+}
+
+enum ProviderStatus {
+  CONNECTED
+  NOT_CONFIGURED
+  DISABLED
+  DEGRADED
+  ERROR
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum AlertChannel {
+  EMAIL
+  PUSH
+  TELEGRAM
+}
+
+enum AlertStatus {
+  ACTIVE
+  TRIGGERED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comparisons Comparison[]
+  alerts      PriceAlert[]
+
+  @@index([role])
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  country   String?
+  website   String?
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+}
+
+model CategoryInfo {
+  id          String   @id @default(cuid())
+  key         Category @unique
+  slug        String   @unique
+  name        String
+  description String?
+  seoTitle    String?
+  seoText     String?
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  slug        String
+  category    Category
+  name        String
+  model       String
+  description String?
+  image       String?
+  images      String[] @default([])
+  releaseYear Int
+  productUrl  String?
+
+  // Precio de referencia en moneda original. Nunca se guarda convertido.
+  referencePrice    Decimal? @db.Decimal(12, 2)
+  referenceCurrency Currency @default(BOB)
+
+  popularity       Int @default(0)
+  performanceScore Int @default(0)
+
+  // Trazabilidad del dato (sistema de confianza).
+  source      String     @default("manual")
+  sourceLabel String?
+  sourceUrl   String?
+  confidence  Confidence @default(REPORTED)
+  lastUpdated DateTime   @default(now())
+
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Restrict)
+
+  phone  Phone?
+  laptop Laptop?
+  cpu    Cpu?
+  gpu    Gpu?
+
+  specifications  Specification[]
+  offers          ProductOffer[]
+  priceHistory    PriceHistory[]
+  availability    CountryAvailability[]
+  externalRefs    ExternalProductRef[]
+  alerts          PriceAlert[]
+  comparisonItems ComparisonItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, slug])
+  @@index([category, popularity])
+  @@index([category, performanceScore])
+  @@index([brandId])
+  @@index([referencePrice])
+}
+
+/// Especificaciones tipadas de smartphone.
+model Phone {
+  productId String  @id
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  screenSize      Decimal @db.Decimal(4, 2)
+  resolution      String
+  refreshRate     Int
+  panel           String
+  chipset         String
+  chipsetSlug     String?
+  ram             Int
+  storage         Int
+  mainCamera      Int
+  cameraCount     Int
+  frontCamera     Int
+  battery         Int
+  fastCharge      Int
+  os              String
+  osVersion       String
+  fiveG           Boolean
+  nfc             Boolean
+  weight          Int
+  waterResistance String?
+
+  scores Json @default("{}")
+
+  @@index([ram, storage])
+  @@index([os])
+}
+
+/// Especificaciones tipadas de portátil.
+model Laptop {
+  productId String  @id
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  cpu         String
+  cpuSlug     String?
+  gpu         String
+  gpuSlug     String?
+  ram         Int
+  ramType     String
+  storage     Int
+  storageType String
+  screenSize  Decimal  @db.Decimal(4, 2)
+  resolution  String
+  refreshRate Int
+  panel       String
+  weight      Decimal  @db.Decimal(4, 2)
+  battery     Int
+  os          String
+  ports       String[] @default([])
+  wireless    String
+
+  scores Json @default("{}")
+
+  @@index([ram, storage])
+}
+
+/// Especificaciones tipadas de procesador.
+model Cpu {
+  productId String  @id
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  vendor           String
+  segment          String
+  cores            Int
+  performanceCores Int?
+  efficiencyCores  Int?
+  threads          Int
+  baseClock        Decimal @db.Decimal(4, 2)
+  boostClock       Decimal @db.Decimal(4, 2)
+  architecture     String
+  process          String
+  tdp              Int
+  socket           String?
+  integratedGpu    String?
+  singleCore       Int
+  multiCore        Int
+
+  scores Json @default("{}")
+
+  @@index([vendor, segment])
+  @@index([multiCore])
+}
+
+/// Especificaciones tipadas de tarjeta gráfica.
+model Gpu {
+  productId String  @id
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  vendor       String
+  vram         Int
+  vramType     String
+  memoryBus    Int
+  architecture String
+  process      String
+  tdp          Int
+  baseClock    Decimal  @db.Decimal(4, 2)
+  boostClock   Decimal  @db.Decimal(4, 2)
+  shaders      Int
+  rayTracing   Boolean
+  rtCores      Int?
+  upscaling    String[] @default([])
+  fps1080p     Int
+  fps1440p     Int
+  fps4k        Int
+
+  scores Json @default("{}")
+
+  @@index([vendor])
+  @@index([vram])
+}
+
+/// Especificación libre clave/valor con su propia trazabilidad.
+/// Permite guardar campos que aún no tienen columna tipada.
+model Specification {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  key         String
+  label       String?
+  valueText   String?
+  valueNumber Decimal? @db.Decimal(16, 4)
+  valueBool   Boolean?
+  unit        String?
+
+  source      String
+  sourceUrl   String?
+  confidence  Confidence @default(REPORTED)
+  lastUpdated DateTime   @default(now())
+
+  @@unique([productId, key, source])
+  @@index([key])
+}
+
+model Retailer {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  country     String
+  website     String
+  integration String   @default("manual")
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+
+  offers       ProductOffer[]
+  priceHistory PriceHistory[]
+
+  @@index([country])
+}
+
+/// Oferta concreta de un producto en una tienda.
+model ProductOffer {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  retailerId String
+  retailer   Retailer @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+
+  externalId String?
+
+  // Siempre en la moneda publicada por la tienda.
+  originalPrice    Decimal  @db.Decimal(12, 2)
+  originalCurrency Currency
+
+  availability Availability @default(UNKNOWN)
+  productUrl   String?
+  shippingNote String?
+
+  source      String
+  sourceUrl   String?
+  confidence  Confidence @default(REPORTED)
+  lastUpdated DateTime   @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, retailerId, externalId])
+  @@index([productId, originalPrice])
+  @@index([retailerId])
+}
+
+/// Serie temporal de precios. Una fila por observación.
+model PriceHistory {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  retailerId String?
+  retailer   Retailer? @relation(fields: [retailerId], references: [id], onDelete: SetNull)
+
+  price     Decimal  @db.Decimal(12, 2)
+  currency  Currency
+  timestamp DateTime @default(now())
+
+  @@index([productId, timestamp])
+  @@index([retailerId, timestamp])
+}
+
+/// Disponibilidad real por país: un producto global puede no venderse en Bolivia.
+model CountryAvailability {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  country      String
+  available    Boolean      @default(false)
+  availability Availability @default(UNKNOWN)
+  note         String?
+  lastUpdated  DateTime     @default(now())
+
+  @@unique([productId, country])
+  @@index([country, available])
+}
+
+/// Identificador del producto en una fuente externa, para sincronización
+/// incremental y para resolver duplicados entre tiendas.
+model ExternalProductRef {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  provider    String
+  externalId  String
+  /// Huella normalizada del nombre, usada por la detección de duplicados.
+  fingerprint String?
+  sourceUrl   String?
+  lastSeenAt  DateTime @default(now())
+
+  @@unique([provider, externalId])
+  @@index([fingerprint])
+}
+
+/// Comparación guardada y compartible por URL.
+model Comparison {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  category  Category
+  title     String?
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  items ComparisonItem[]
+
+  @@index([category, views])
+}
+
+model ComparisonItem {
+  id           String     @id @default(cuid())
+  comparisonId String
+  comparison   Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  position Int
+
+  @@unique([comparisonId, productId])
+  @@index([productId])
+}
+
+/// Aviso de bajada de precio. La entrega (email / push / Telegram) se conecta
+/// más adelante; el modelo ya soporta los tres canales.
+model PriceAlert {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  email       String?
+  targetPrice Decimal      @db.Decimal(12, 2)
+  currency    Currency     @default(BOB)
+  channel     AlertChannel @default(EMAIL)
+  status      AlertStatus  @default(ACTIVE)
+
+  triggeredAt DateTime?
+  notifiedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([productId, status])
+  @@index([email])
+}
+
+/// Estado operativo persistente de cada proveedor.
+model ProviderState {
+  id       String         @id @default(cuid())
+  provider String         @unique
+  name     String
+  kind     ProviderKind
+  status   ProviderStatus @default(NOT_CONFIGURED)
+
+  lastSyncAt          DateTime?
+  lastSuccessAt       DateTime?
+  productCount        Int       @default(0)
+  consecutiveFailures Int       @default(0)
+  /// Pausa automática tras errores consecutivos.
+  disabledUntil       DateTime?
+  message             String?
+
+  updatedAt DateTime @updatedAt
+
+  logs SyncLog[]
+}
+
+model SyncLog {
+  id       String @id @default(cuid())
+  /// Identificador del proveedor, conservado aunque se borre su estado.
+  provider String
+
+  providerStateId String?
+  state           ProviderState? @relation(fields: [providerStateId], references: [id], onDelete: SetNull)
+
+  startTime         DateTime   @default(now())
+  endTime           DateTime?
+  durationMs        Int?
+  productsProcessed Int        @default(0)
+  productsCreated   Int        @default(0)
+  productsUpdated   Int        @default(0)
+  productsDeleted   Int        @default(0)
+  errors            String[]   @default([])
+  status            SyncStatus @default(RUNNING)
+
+  @@index([provider, startTime])
+  @@index([status])
+}
